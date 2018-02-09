@@ -32,8 +32,15 @@ import static com.wix.reactnativenotifications.Defs.LOGTAG;
 
 public class RNNotificationsModule extends ReactContextBaseJavaModule implements ActivityEventListener {
 
-    public RNNotificationsModule(Application application, ReactApplicationContext reactContext) {
+    private final boolean mClearAllNotificationsOnInit;
+    private final boolean mClearAllNotificationsOnResume;
+
+    public RNNotificationsModule(Application application, ReactApplicationContext reactContext, boolean clearNotificationsOnInit, boolean clearNotificationsOnResume) {
         super(reactContext);
+
+        mClearAllNotificationsOnInit = clearNotificationsOnInit;
+        mClearAllNotificationsOnResume = clearNotificationsOnResume;
+
         if (AppLifecycleFacadeHolder.get() instanceof ReactAppLifecycleFacade) {
             ((ReactAppLifecycleFacade) AppLifecycleFacadeHolder.get()).init(reactContext);
         }
@@ -52,7 +59,7 @@ public class RNNotificationsModule extends ReactContextBaseJavaModule implements
         startGcmIntentService(FcmInstanceIdRefreshHandlerService.EXTRA_IS_APP_INIT);
 
         final IPushNotificationsDrawer notificationsDrawer = PushNotificationsDrawer.get(getReactApplicationContext().getApplicationContext());
-        notificationsDrawer.onAppInit();
+        notificationsDrawer.onAppInit(mClearAllNotificationsOnInit);
     }
 
     @Override
@@ -112,6 +119,16 @@ public class RNNotificationsModule extends ReactContextBaseJavaModule implements
     public void isRegisteredForRemoteNotifications(Promise promise) {
         boolean hasPermission = NotificationManagerCompat.from(getReactApplicationContext()).areNotificationsEnabled();
         promise.resolve(new Boolean(hasPermission));
+    }
+
+    @Override
+    public void onAppVisible() {
+        final IPushNotificationsDrawer notificationsDrawer = PushNotificationsDrawer.get(getReactApplicationContext().getApplicationContext());
+        notificationsDrawer.onAppVisible(mClearAllNotificationsOnResume);
+    }
+
+    @Override
+    public void onAppNotVisible() {
     }
 
     protected void startGcmIntentService(String extraFlag) {

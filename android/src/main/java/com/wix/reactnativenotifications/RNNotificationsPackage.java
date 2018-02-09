@@ -29,6 +29,8 @@ import static com.wix.reactnativenotifications.Defs.LOGTAG;
 public class RNNotificationsPackage implements ReactPackage, AppLifecycleFacade.AppVisibilityListener, Application.ActivityLifecycleCallbacks {
 
     private final Application mApplication;
+    private final boolean mClearNotificationsOnInit;
+    private final boolean mClearNotificationsOnResume;
 
     public RNNotificationsPackage(Application application) {
         mApplication = application;
@@ -36,11 +38,35 @@ public class RNNotificationsPackage implements ReactPackage, AppLifecycleFacade.
 
         AppLifecycleFacadeHolder.get().addVisibilityListener(this);
         application.registerActivityLifecycleCallbacks(this);
+        mClearNotificationsOnInit = true;
+        mClearNotificationsOnResume = true;
+    }
+
+    public RNNotificationsPackage(Application application, boolean clearNotificationsOnInit) {
+        mApplication = application;
+        FirebaseApp.initializeApp(application.getApplicationContext());
+
+        AppLifecycleFacadeHolder.get().addVisibilityListener(this);
+        application.registerActivityLifecycleCallbacks(this);
+
+        mClearNotificationsOnInit = clearNotificationsOnInit;
+        mClearNotificationsOnResume = true;
+    }
+
+    public RNNotificationsPackage(Application application, boolean clearNotificationsOnInit, boolean clearNotificationsOnResume) {
+        mApplication = application;
+        FirebaseApp.initializeApp(application.getApplicationContext());
+
+        AppLifecycleFacadeHolder.get().addVisibilityListener(this);
+        application.registerActivityLifecycleCallbacks(this);
+
+        mClearNotificationsOnInit = clearNotificationsOnInit;
+        mClearNotificationsOnResume = clearNotificationsOnResume;
     }
 
     @Override
     public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
-        return Arrays.<NativeModule>asList(new RNNotificationsModule(mApplication, reactContext));
+        return Arrays.<NativeModule>asList(new RNNotificationsModule(mApplication, reactContext, mClearNotificationsOnInit, mClearNotificationsOnResume));
     }
 
     @Override
